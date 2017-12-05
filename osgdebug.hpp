@@ -6,13 +6,14 @@ Miloslav "drummyfish" Ciz, 2017
 
 usage:
 
-to_str(what,[align])      convert to string, optional align
-print(what,[align])       print as string, optional align
-trans(mat)                treat matrix mat as transform, e.g. print(trans(m))
-rot(quat)                 treat quaternion as rotation, e.g. print(rot(q))
-sep([len],[char])         print separator
-print_scene(root)         print scene graph
-print_parents(node)       print parents (node path)
+to_str(what,[align])        convert to string, optional align
+print(what,[align])         print as string, optional align
+trans(mat)                  treat matrix mat as transform, e.g. print(trans(m))
+rot(quat)                   treat quaternion as rotation, e.g. print(rot(q))
+sep([len],[char])           print separator
+print_scene(root,[depth])   print scene graph
+print_parents(node)         print parents (node path)
+world_trans(node,[levels])  get world transform matrix, optional maximum parents to ascend
 
 ********************************/
 
@@ -196,6 +197,22 @@ std::string to_str(osg::Node *n)
     return v.result_string;
 }
 
+osg::Matrixd world_trans(const osg::Node *n, int max_levels=-1)
+{
+    osg::NodePathList path = n->getParentalNodePaths();    
+
+    if (max_levels >= 0)
+    {
+        max_levels += 1;   // node itself
+        unsigned int loops = path[0].size() - max_levels;
+
+        for (unsigned int i = 0; !path[0].empty() && i < loops; ++i) 
+           path[0].erase(path[0].begin()); 
+    }
+
+    return osg::computeLocalToWorld(path[0]);
+}
+
 void print_scene(osg::Node *root, int max_level=-1, int level=0)
 {
     if (max_level >= 0 && level > max_level)
@@ -206,13 +223,8 @@ void print_scene(osg::Node *root, int max_level=-1, int level=0)
 
     for (int i = 0; i < level + 1; ++i)
         std::cout << "  ";
-
-    //toStringVisitor v;
-    //root->accept(v);
-    //std::cout << v.result_string << std::endl;
     
     std::cout << to_str(root) << std::endl;
-
     osg::Group *g = root->asGroup();
 
     if (g)
@@ -222,7 +234,7 @@ void print_scene(osg::Node *root, int max_level=-1, int level=0)
     }
 }
 
-void print_parents(osg::Node *start)
+void print_parents(const osg::Node *start)
 {
    std::cout << "PARENTS OF NODE:" << std::endl;
 
