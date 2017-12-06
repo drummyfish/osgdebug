@@ -190,10 +190,19 @@ public:
     }
 };
 
-std::string to_str(osg::Node *n)
+std::string to_str(osg::Node *n, int align=-1)
 {
     toStringVisitor v;
     n->accept(v);
+    return v.result_string;
+}
+
+template<typename T>
+std::string to_str(const T *n, int align=-1)
+{
+    toStringVisitor v;
+    osg::ref_ptr<T> n2 = new T(*n);  // to keep const
+    n2->accept(v);
     return v.result_string;
 }
 
@@ -247,6 +256,12 @@ void print_parents(const osg::Node *start)
 
        std::cout << to_str(path[0][i]) << std::endl;
    }
+}
+
+template<typename T>
+void print(const T *what, int align=-1)
+{
+    std::cout << to_str(what,align) << std::endl;
 }
 
 #endif
